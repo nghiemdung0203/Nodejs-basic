@@ -6,11 +6,6 @@ const userSchema = new mongoose.Schema({
       type: Date,
       default: Date.now,
     },
-    role: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Role",
-        default: null
-    }
 })
 
 module.exports = mongoose.model("User", userSchema);
