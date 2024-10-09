@@ -1,9 +1,11 @@
-const User = require("../../Model/User");
+
+const { userService } = require("../../service/User/userService");
 
 const getUser = async (req, res) => {
+  const userId = req.user._id;
   try {
-    const users = await User.find(); // Thay thế callback bằng async/await
-    res.json(users);
+    const users = await userService.getUserService(userId);
+    res.status(201).json(users);
   } catch (err) {
     res.status(500).send(err.message);
   }

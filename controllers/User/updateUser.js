@@ -1,20 +1,17 @@
-const User = require("../../Model/User");
+const { userService } = require("../../service/User/userService");
 
 const updateUser = async (req, res) => {
+  const userId = req.user._id;
+  const { name, age } = req.body;
   try {
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: req.params.userID },
-      { $set: { name: req.body.name } },
-      { new: true }
-    );
-    
-    if (!updatedUser) {
-      return res.status(404).send("User not found");
-    }
-
+    const updatedUser = await userService.updateUserService(userId, name, age);
     res.json(updatedUser);
   } catch (err) {
-    res.status(500).send(err.message);
+    if (err.message === "User not found") {
+      res.status(404).send("User not found");
+    } else {
+      res.status(500).send(err.message);
+    }
   }
 };
 

@@ -1,9 +1,18 @@
-const User = require("../../Model/User");
+const { userService } = require("../../service/User/userService");
 
-const deleteUser = (req, res) => {
-    User.deleteOne({ _id: req.params.userID })
-      .then(() => res.json({ message: "user Deleted" }))
-      .catch((err) => res.send(err));
-  };
 
-  module.exports = deleteUser;
+const deleteUser = async(req, res) => {
+  const { userId } = req.params;
+  try {
+    const result = await userService.deleteUserService(userId);
+    res.json(result);
+  } catch (error) {
+    if (error.message === "User not found") {
+      res.status(404).send("User not found");
+    } else {
+      res.status(500).send(error.message);
+    }
+  }
+};
+
+module.exports = deleteUser;
