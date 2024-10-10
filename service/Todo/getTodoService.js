@@ -1,6 +1,29 @@
+
+const {
+  userIdValidationSchema,
+  paginationValidationSchema,
+} = require("../../middleware/validation/todoValidation");
 const Todo = require("../../Model/Todo");
 
-const getTodoService = async (userId, page, limit) => {
+const getTodoService = async (req) => {
+  const userId = req.user._id;
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const { error: paginationError } = paginationValidationSchema.validate(
+    req.query
+  );
+  if (paginationError) {
+    throw new Error(paginationError.details[0].message);
+  }
+
+  const { error: userIdError } = userIdValidationSchema.validate({
+    user: userId.toString(),
+  });
+  if (userIdError) {
+    throw new Error(userIdError.details[0].message);
+  }
+
   try {
     const skip = (page - 1) * limit;
 
@@ -14,6 +37,8 @@ const getTodoService = async (userId, page, limit) => {
     return {
       todos: todoList,
       totalTodos,
+      page,
+      limit,
     };
   } catch (error) {
     throw new Error(error.message);

@@ -1,17 +1,8 @@
 const { todoService } = require("../../service/Todo/todoService");
 
 const updateTodo = async (req, res) => {
-  const userId = req.user._id;
-  const { todoId, description, completed, dueDate } = req.body;
-
   try {
-    const updatedTodo = await todoService.updateTodoService(
-      userId,
-      todoId,
-      description,
-      completed,
-      dueDate
-    );
+    const updatedTodo = await todoService.updateTodoService(req);
     res.status(200).json(updatedTodo);
   } catch (error) {
     if (error.message === "Todo not found") {

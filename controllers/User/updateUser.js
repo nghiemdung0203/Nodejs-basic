@@ -1,16 +1,15 @@
 const { userService } = require("../../service/User/userService");
 
 const updateUser = async (req, res) => {
-  const userId = req.user._id;
-  const { name, age } = req.body;
+  
   try {
-    const updatedUser = await userService.updateUserService(userId, name, age);
+    const updatedUser = await userService.updateUserService(req);
     res.json(updatedUser);
-  } catch (err) {
-    if (err.message === "User not found") {
-      res.status(404).send("User not found");
+  } catch (error) {
+    if (error.message.includes("User not found")) {
+      res.status(404).json({ error: error.message });
     } else {
-      res.status(500).send(err.message);
+      res.status(400).json({ error: error.message });
     }
   }
 };

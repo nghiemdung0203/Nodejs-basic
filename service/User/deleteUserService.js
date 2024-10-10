@@ -1,6 +1,12 @@
+const { userIdValidationSchema } = require("../../middleware/validation/userValidation");
 const User = require("../../Model/User");
 
-const deleteUserService = async (userId) => {
+const deleteUserService = async (req) => {
+  const { userId } = req.params;
+  const { error } = userIdValidationSchema.validate(userId);
+  if (error) {
+    return { error: error.details[0].message };
+  }
   try {
     const deletedUser = await User.deleteOne({ _id: userId });
   if (deletedUser.deletedCount === 0) {

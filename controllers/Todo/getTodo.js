@@ -1,17 +1,8 @@
 const { todoService } = require("../../service/Todo/todoService");
 
 const getTodo = async (req, res) => {
-  const userId = req.user._id;
-
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-
   try {
-    const { todos, totalTodos } = await todoService.getTodoService(
-      userId,
-      page,
-      limit
-    );
+    const { todos, totalTodos, page, limit } = await todoService.getTodoService(req);
 
     res.status(200).json({
       totalTodos,

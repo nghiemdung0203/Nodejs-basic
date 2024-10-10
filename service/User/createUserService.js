@@ -1,17 +1,19 @@
+const { userValidationSchema } = require("../../middleware/validation/userValidation");
 const User = require("../../Model/User");
-const jwt = require("jsonwebtoken");
 
-const createUserService = async (name, age, email, password) => {
+const createUserService = async (req) => {
+  const { error } = userValidationSchema.validate(req.body);
+  if (error) {
+    return { error: error.details[0].message };
+  }
+
   try {
-    const user = new User({
-      name: name,
-      age: age,
-      email: email,
-      password: password,
-    });
+    const user = new User(req.body);
     await user.save();
-    await user.generateAuthToken();
-    return user;
+
+    const token = await user.generateAuthToken();
+
+    return { user, token };
   } catch (error) {
     throw new Error(error.message);
   }

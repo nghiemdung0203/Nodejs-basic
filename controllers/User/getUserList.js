@@ -1,13 +1,9 @@
 const { userService } = require("../../service/User/userService");
 
 const getUserList = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+ 
   try {
-    const { userList, totalUser } = await userService.getUserListService(
-      page,
-      limit
-    );
+    const { userList, totalUser, page, limit } = await userService.getUserListService(req);
     res
       .status(200)
       .json({
