@@ -1,6 +1,7 @@
 const cloudinary = require("../../cloudinary");
 const streamifier = require("streamifier");
 
+
 const uploadImage = async (req) => {
   if (!req.file) {
     throw new Error("No image uploaded.");
