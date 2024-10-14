@@ -14,7 +14,8 @@ const getTodoService = async (req) => {
     req.query
   );
   if (paginationError) {
-    throw new Error(paginationError.details[0].message);
+    throw new Error({paginationError: paginationError.details[0].message});
+    
   }
 
   const { error: userIdError } = userIdValidationSchema.validate({
