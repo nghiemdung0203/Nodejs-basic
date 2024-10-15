@@ -10,11 +10,12 @@ const createUserService = async (req) => {
   try {
     const user = new User(req.body);
     await user.save();
-
+    
     const token = await user.generateAuthToken();
 
     return { user, token };
   } catch (error) {
+    console.error("Error in createUserService:", error);
     throw new Error(error.message);
   }
 };

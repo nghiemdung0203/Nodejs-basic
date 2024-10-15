@@ -7,14 +7,16 @@ const getUserService = async (req) => {
   const userId = req.user._id.toString();
   const { error } = userIdValidationSchema.validate({ userId });
   if (error) {
-    return { error: error.details[0].message };
+      return { error: error.details[0].message };
   }
   try {
-    const users = await User.findById({ _id: req.user._id });
-    return users;
+      const users = await User.findById(userId);
+      console.log("Retrieved user:", users); // Log the retrieved user
+      return users;
   } catch (error) {
-    throw new Error(error.message);
+      throw new Error(error.message);
   }
 };
+
 
 module.exports = getUserService;
