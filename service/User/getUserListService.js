@@ -5,14 +5,18 @@ const getUserListService = async (req) => {
   const limit = parseInt(req.query.limit) || 10;
   try {
     const skip = (page - 1) * limit;
-    const userList = await User.find().limit(limit).skip(skip).exec();
+    const userList = await User.find()
+      .select("-password")
+      .limit(limit)
+      .skip(skip)
+      .exec();
 
     const totalUser = await User.countDocuments();
     return {
       userList,
       totalUser,
       page,
-      limit
+      limit,
     };
   } catch (error) {
     throw new Error(error.message);

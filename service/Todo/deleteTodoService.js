@@ -7,8 +7,6 @@ const Todo = require("../../Model/Todo");
 const deleteTodoService = async (req) => {
   const userId = req.user._id;
   const { todoId } = req.body;
-  console.log(todoId);
-  console.log(userId);
 
   const { error: errorId } = todoIdValidationSchema.validate({ todoId: todoId.toString() });
   if (errorId) {

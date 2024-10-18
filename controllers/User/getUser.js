@@ -7,7 +7,7 @@ const getUser = async (req, res) => {
     const users = await userService.getUserService(req);
     res.status(201).json(users);
   } catch (err) {
-    res.status(500).send(err.message);
+    res.status(500).json(err.message);
   }
 };
 

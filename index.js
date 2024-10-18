@@ -4,8 +4,7 @@ const mongoose = require("mongoose");
 const userRouter = require('./routers/userRouter')
 const todoRouter = require('./routers/todoRouter')
 const uploadRouter = require('./routers/uploadImageRouter')
-const dotenv = require("dotenv");
-dotenv.config();
+require('dotenv').config()
 const PORT = 8000;
 const cors = require("cors");
 const helmet = require('helmet');

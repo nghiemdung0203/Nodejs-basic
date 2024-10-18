@@ -1,4 +1,3 @@
-
 const {
   userIdValidationSchema,
   paginationValidationSchema,
@@ -14,8 +13,7 @@ const getTodoService = async (req) => {
     req.query
   );
   if (paginationError) {
-    throw new Error({paginationError: paginationError.details[0].message});
-    
+    throw new Error(paginationError.details[0].message);
   }
 
   const { error: userIdError } = userIdValidationSchema.validate({
@@ -42,6 +40,7 @@ const getTodoService = async (req) => {
       limit,
     };
   } catch (error) {
+    console.error(error);
     throw new Error(error.message);
   }
 };

@@ -2,13 +2,14 @@ const jwt = require('jsonwebtoken');
 const User = require('../Model/User');
 
 const authenticate = async (req, res, next) => {
-    const token = req.headers['authorization'].replace('Bearer ', '');
+    const authHeader = req.headers['authorization'];
 
-    if (!token) {
+    // Check if authorization header exists
+    if (!authHeader) {
         return res.status(401).send({ error: 'No token provided, authorization denied.' });
     }
 
-    console.log(token)
+    const token = authHeader.replace('Bearer ', '');
 
     try {
         const data = jwt.verify(token, process.env.JWT_SECRET); // Log the decoded JWT data
@@ -19,13 +20,18 @@ const authenticate = async (req, res, next) => {
             return res.status(401).send({ error: 'Not authorized to access this resource.' });
         }
 
-        req.user = user;
+        req.user = {
+            _id: user._id,
+            name: user.name,
+            age: user.age,
+            email: user.email,
+            tokens: user.tokens
+        };
         req.token = token;
 
         next();
     } catch (error) {
-        console.error("JWT Verification error:", error.message); // Log any verification error
-        res.status(401).send({ error: 'Not authorized to access this resource.' }); // Send error response
+        res.status(401).send({ error: 'Not authorized to access this resource.' });
     }
 };
 

@@ -1,7 +1,10 @@
 // test-setup.js
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const mongoose = require('mongoose');
+const { MongoMemoryServer } = require("mongodb-memory-server");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const path = require('path');
 
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 let mongoServer;
 
 const connect = async () => {

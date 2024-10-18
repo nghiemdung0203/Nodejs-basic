@@ -3,12 +3,20 @@ const User = require("../Model/User");
 const redisClient = require("../redis");
 
 const authenticateGetTodo = async (req, res, next) => {
-  const token = req.header("Authorization").replace("Bearer ", "");
-  const data = jwt.verify(token, process.env.JWT_SECRET);
+  const authHeader = req.header("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .send({ error: "No token provided, authorization denied." });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+
   try {
+    const data = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findOne({ _id: data._id, "tokens.token": token });
     if (!user) {
-      throw new Error();
+      throw new Error("User not found.");
     }
     req.user = user;
     req.token = token;
@@ -24,7 +32,14 @@ const authenticateGetTodo = async (req, res, next) => {
       next();
     }
   } catch (error) {
-    res.status(401).send({ error: error.message });
+    if (error.name === "JsonWebTokenError") {
+      return res
+        .status(401)
+        .send({ error: "Not authorized to access this resource." });
+    }
+    return res
+      .status(401)
+      .send({ error: "Not authorized to access this resource." });
   }
 };
 
