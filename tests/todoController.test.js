@@ -19,12 +19,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await disconnect();
-});
-
-afterEach(async () => {
-  await clearDatabase();
   jest.clearAllMocks();
+  await disconnect();
 });
 
 authenticate.mockImplementation((req, res, next) => {

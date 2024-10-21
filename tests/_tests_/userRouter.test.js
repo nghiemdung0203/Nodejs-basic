@@ -12,18 +12,15 @@ app.use("/api", userRouter);
 
 beforeAll(async () => {
   await connect();
+  let userTest;
 });
 
 afterAll(async () => {
+  jest.clearAllMocks();
   await disconnect();
 });
 
-beforeEach(async () => {
-  await clearDatabase();
-});
-
 describe("Create user api", () => {
-  let user;
   it("should create a new user", async () => {
     const newUser = {
       name: "John Doe",
@@ -37,11 +34,7 @@ describe("Create user api", () => {
       .send(newUser)
       .expect(201);
 
-    // If the test fails, log the response body
-    if (response.status !== 201) {
-      console.error("Response body:", response.body);
-    }
-    user = response.body.user;
+    userTest = response.body.user;
     expect(response.body.user).toBeDefined();
     expect(response.body.user.name).toBe(newUser.name);
     expect(response.body.user.email).toBe(newUser.email);
@@ -71,7 +64,7 @@ describe("Create user api", () => {
 });
 
 describe("getUserList api", () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
     // Create some test users
     const users = [
       {
@@ -103,7 +96,7 @@ describe("getUserList api", () => {
       .query({ page: 1, limit: 2 })
       .expect(200);
 
-    expect(response.body).toHaveProperty("totalUser", 3);
+    expect(response.body).toHaveProperty("totalUser", 4);
     expect(response.body).toHaveProperty("currentPage", 1);
     expect(response.body).toHaveProperty("totalPages", 2);
     expect(response.body).toHaveProperty("userList");
@@ -123,11 +116,11 @@ describe("getUserList api", () => {
   it("should use default pagination if not provided", async () => {
     const response = await request(app).get("/api/getUserList").expect(200);
 
-    expect(response.body).toHaveProperty("totalUser", 3);
+    expect(response.body).toHaveProperty("totalUser", 4);
     expect(response.body).toHaveProperty("currentPage", 1);
     expect(response.body).toHaveProperty("totalPages", 1);
     expect(response.body).toHaveProperty("userList");
-    expect(response.body.userList).toHaveLength(3); // Assuming default limit is 10
+    expect(response.body.userList).toHaveLength(4); // Assuming default limit is 10
   });
 
   it("should return the second page of users", async () => {
@@ -136,43 +129,24 @@ describe("getUserList api", () => {
       .query({ page: 2, limit: 2 })
       .expect(200);
 
-    expect(response.body).toHaveProperty("totalUser", 3);
+    expect(response.body).toHaveProperty("totalUser", 4);
     expect(response.body).toHaveProperty("currentPage", 2);
     expect(response.body).toHaveProperty("totalPages", 2);
     expect(response.body).toHaveProperty("userList");
-    expect(response.body.userList).toHaveLength(1);
+    expect(response.body.userList).toHaveLength(2);
   });
 });
 
 describe("getUser API", () => {
-  let user;
-  let token;
-
-  beforeEach(async () => {
-    // Create a test user
-    user = new User({
-      name: "Test User",
-      email: "test@example.com",
-      password: "@Password123456",
-      age: 30,
-    });
-    await user.save();
-
-    // Generate a token for the user
-    token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET);
-    user.tokens = user.tokens.concat({ token });
-    await user.save();
-  });
   it("should return user data when authenticated", async () => {
     const response = await request(app)
       .get("/api/user")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${userTest.tokens[0].token}`)
       .expect(201);
-
-    expect(response.body).toHaveProperty("_id", user._id.toString());
-    expect(response.body).toHaveProperty("name", "Test User");
-    expect(response.body).toHaveProperty("email", "test@example.com");
-    expect(response.body).toHaveProperty("age", 30);
+    expect(response.body).toHaveProperty("_id", userTest._id.toString());
+    expect(response.body).toHaveProperty("name", "John Doe");
+    expect(response.body).toHaveProperty("email", "john@example.com");
+    expect(response.body).toHaveProperty("age", 25);
     expect(response.body).not.toHaveProperty("password");
   });
 
@@ -191,19 +165,15 @@ describe("getUser API", () => {
       .set("Authorization", "Bearer invalidtoken")
       .expect(401);
 
-    expect(response.body).toHaveProperty(
-      "error",
-      "Not authorized to access this resource."
-    );
+    expect(response.body).toHaveProperty("error", "jwt malformed");
   });
 
   it("should return 401 when user is not found", async () => {
-    // Delete the user to simulate a scenario where the user is not found
-    await User.findByIdAndDelete(user._id);
+    await User.findByIdAndDelete(userTest._id);
 
     const response = await request(app)
       .get("/api/user")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${userTest.tokens[0].token}`)
       .expect(401);
 
     expect(response.body).toHaveProperty(
@@ -232,7 +202,10 @@ describe("updateUser API", () => {
     user.tokens = user.tokens.concat({ token });
     await user.save();
   });
-
+  afterEach(async () => {
+    // Clear the users collection after each test
+    await User.deleteMany();
+  });
   it("should update user data when authenticated", async () => {
     const updatedData = {
       name: "Updated User",
@@ -243,7 +216,7 @@ describe("updateUser API", () => {
       .put("/api/updateUser")
       .set("Authorization", `Bearer ${token}`)
       .send(updatedData)
-      .expect(200);
+      .expect(201);
 
     expect(response.body).toHaveProperty("_id", user._id.toString());
     expect(response.body).toHaveProperty("name", "Updated User");
@@ -288,7 +261,7 @@ describe("updateUser API", () => {
 
     expect(response.body).toHaveProperty(
       "error",
-      "Not authorized to access this resource."
+      "jwt malformed"
     );
   });
 

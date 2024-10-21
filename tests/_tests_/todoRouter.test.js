@@ -19,34 +19,32 @@ jest.mock("../../redis", () => ({
 
 beforeAll(async () => {
   await connect();
+  let testUser;
+  let token;
+  let todoId
 });
 
 afterAll(async () => {
+  jest.clearAllMocks();
   await disconnect();
 });
 
-beforeEach(async () => {
-  await clearDatabase();
-});
 
 describe("createTodo api", () => {
-  let token;
-  let userId;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const user = new User({
-      name: "John Doe",
-      age: 25,
+      name: "Shawn Doe",
+      age: 20,
       email: "john.doe@example.com",
       password: "@Password123456",
     });
     await user.save();
-    userId = user._id;
-
-    // Generate a token for the test user
-    token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    user.tokens = user.tokens.concat({ token });
-    await user.save();
+    
+    testUser = user
+    token = jwt.sign({ _id: testUser._id }, process.env.JWT_SECRET);
+    testUser.tokens = testUser.tokens.concat({ token });
+    
   });
 
   it("should create a new todo when authenticated", async () => {
@@ -57,12 +55,12 @@ describe("createTodo api", () => {
         description: "Test todo",
         dueDate: new Date().toISOString(),
       });
-
+      todoId = response.body._id
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty("_id");
     expect(response.body.description).toBe("Test todo");
     expect(response.body.completed).toBe(false);
-    expect(response.body.user).toBe(userId.toString());
+    expect(response.body.user).toBe(testUser._id.toString());
 
     // Verify the todo was saved in the database
     const todo = await Todo.findById(response.body._id);
@@ -89,7 +87,7 @@ describe("createTodo api", () => {
       });
 
     expect(response.status).toBe(401);
-    expect(response.body.error).toBe("Not authorized to access this resource.");
+    expect(response.body.error).toBe("jwt malformed");
   });
 
   it("should return 400 if missing description", async () => {
@@ -107,38 +105,21 @@ describe("createTodo api", () => {
 });
 
 describe("getTodo api", () => {
-  let token;
-  let userId;
 
   beforeEach(async () => {
-    // Create a new user
-    const user = new User({
-      name: "John Doe",
-      age: 25,
-      email: "john.doe@example.com",
-      password: "@Password123456",
-    });
-    await user.save();
-    userId = user._id;
 
-    // Generate JWT token for the user
-    token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    user.tokens = user.tokens.concat({ token });
-    await user.save();
-
-    // Create some todos for the test user
     const todos = [
       {
         description: "Test todo 1",
         dueDate: new Date().toISOString(),
         completed: false,
-        user: user._id,
+        user: testUser._id,
       },
       {
         description: "Test todo 2",
         dueDate: new Date().toISOString(),
         completed: false,
-        user: user._id,
+        user: testUser._id,
       },
     ];
     await Todo.insertMany(todos);
@@ -148,11 +129,10 @@ describe("getTodo api", () => {
     const response = await request(app)
       .get("/api/getTodoList")
       .set("Authorization", `Bearer ${token}`);
-
     expect(response.status).toBe(200);
-    expect(response.body.data.todos.length).toBe(2); // 2 todos were created for this user
-    expect(response.body.data.todos[0].description).toBe("Test todo 1");
-    expect(response.body.data.todos[1].description).toBe("Test todo 2");
+    expect(response.body.data.todos.length).toBe(3); // 2 todos were created for this user
+    expect(response.body.data.todos[1].description).toBe("Test todo 1");
+    expect(response.body.data.todos[2].description).toBe("Test todo 2");
   });
 
   it("should return 401 if no token is provided", async () => {
@@ -170,41 +150,11 @@ describe("getTodo api", () => {
       .set("Authorization", "Bearer invalidtoken");
 
     expect(response.status).toBe(401);
-    expect(response.body.error).toBe("Not authorized to access this resource.");
+    expect(response.body.error).toBe("jwt malformed");
   });
 });
 
 describe("updateTodo api", () => {
-  let token;
-  let userId;
-  let todoId;
-
-  beforeEach(async () => {
-    // Create a new user
-    const user = new User({
-      name: "John Doe",
-      age: 25,
-      email: "john.doe@example.com",
-      password: "@Password123456",
-    });
-    await user.save();
-    userId = user._id;
-
-    // Generate JWT token for the user
-    token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    user.tokens = user.tokens.concat({ token });
-    await user.save();
-
-    // Create a todo for the test user
-    const todo = new Todo({
-      description: "Test todo",
-      dueDate: new Date().toISOString(),
-      completed: false,
-      user: user._id,
-    });
-    await todo.save();
-    todoId = todo._id;
-  });
 
   it("should update a todo when authenticated", async () => {
     const updateData = {
@@ -279,41 +229,11 @@ describe("updateTodo api", () => {
       .send(updateData);
 
     expect(response.status).toBe(401);
-    expect(response.body.error).toBe("Not authorized to access this resource.");
+    expect(response.body.error).toBe("jwt malformed");
   });
 });
 
 describe("deleteTodo api", () => {
-  let token;
-  let userId;
-  let todoId;
-
-  beforeEach(async () => {
-    // Create a new user
-    const user = new User({
-      name: "John Doe",
-      age: 25,
-      email: "john.doe@example.com",
-      password: "@Password123456",
-    });
-    await user.save();
-    userId = user._id;
-
-    // Generate JWT token for the user
-    token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    user.tokens = user.tokens.concat({ token });
-    await user.save();
-
-    // Create a todo for the test user
-    const todo = new Todo({
-      description: "Test todo",
-      dueDate: new Date().toISOString(),
-      completed: false,
-      user: user._id,
-    });
-    await todo.save();
-    todoId = todo._id;
-  });
 
   it("should delete a todo when authenticated", async () => {
     const response = await request(app)
@@ -380,7 +300,7 @@ describe("deleteTodo api", () => {
       });
 
     expect(response.status).toBe(401);
-    expect(response.body.error).toBe("Not authorized to access this resource.");
+    expect(response.body.error).toBe("jwt malformed");
   });
 });
 

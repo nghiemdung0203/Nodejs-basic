@@ -12,11 +12,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  jest.clearAllMocks();
   await disconnect();
-});
-
-afterEach(async () => {
-  await clearDatabase();
 });
 
 describe("CreateTodo service", () => {

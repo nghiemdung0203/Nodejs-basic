@@ -13,10 +13,9 @@ const authenticate = async (req, res, next) => {
 
     try {
         const data = jwt.verify(token, process.env.JWT_SECRET); // Log the decoded JWT data
-
-        const user = await User.findOne({ _id: data._id, 'tokens.token': token });
-
+        const user = await User.findOne({ _id: data._id });
         if (!user) {
+            console.log("Authenticate middleware called");
             return res.status(401).send({ error: 'Not authorized to access this resource.' });
         }
 
@@ -31,7 +30,7 @@ const authenticate = async (req, res, next) => {
 
         next();
     } catch (error) {
-        res.status(401).send({ error: 'Not authorized to access this resource.' });
+        res.status(401).send({ error: error.message });
     }
 };
 

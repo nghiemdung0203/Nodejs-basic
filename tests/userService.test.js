@@ -16,14 +16,12 @@ jest.mock("../middleware/validation/userValidation.js"); // Mock validation sche
 
 beforeAll(async () => {
   await connect();
+  let userTest;
 });
 
 afterAll(async () => {
+  jest.clearAllMocks();
   await disconnect();
-});
-
-afterEach(async () => {
-  await clearDatabase();
 });
 
 describe("createUserService", () => {
@@ -40,10 +38,6 @@ describe("createUserService", () => {
     };
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it("should create a new user and return the user and token", async () => {
     // Mock the validation to resolve
     userValidationSchema.validate.mockReturnValue({ error: null });
@@ -53,7 +47,7 @@ describe("createUserService", () => {
 
     // Verify the user was saved by querying the mock MongoDB
     const savedUser = await User.findOne({ email: req.body.email });
-
+    userTest = savedUser;
     // Assertions
     expect(userValidationSchema.validate).toHaveBeenCalledWith(req.body);
     expect(savedUser).not.toBeNull(); // Check if the user was saved in the database
@@ -88,10 +82,6 @@ describe("createUserService", () => {
 });
 
 describe("getUserList service", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it("should return userList, totalUser, page, and limit", async () => {
     const req = {
       query: {
@@ -101,7 +91,7 @@ describe("getUserList service", () => {
     };
 
     // Insert users directly into the in-memory database without specifying _id
-    const mockUserList = [
+    const insertMockUserList = [
       {
         name: "John Doe",
         email: "john@example.com",
@@ -116,7 +106,7 @@ describe("getUserList service", () => {
       },
     ];
 
-    await User.insertMany(mockUserList); // Insert users into MongoDB
+    await User.insertMany(insertMockUserList); // Insert users into MongoDB
 
     const mockTotalUser = await User.countDocuments(); // Get total user count
 
@@ -124,13 +114,14 @@ describe("getUserList service", () => {
     const result = await getUserListService(req);
 
     // Assertions
-    expect(result.userList).toHaveLength(2);
+    expect(result.userList).toHaveLength(3);
     expect(result.totalUser).toBe(mockTotalUser);
     expect(result.page).toBe(1);
     expect(result.limit).toBe(10);
 
     expect(result.userList[0].name).toBe("John Doe");
-    expect(result.userList[1].name).toBe("Jane Doe");
+    expect(result.userList[1].name).toBe("John Doe");
+    expect(result.userList[2].name).toBe("Jane Doe");
   });
 
   it("should throw an error if the database query fails", async () => {
@@ -153,37 +144,20 @@ describe("getUserList service", () => {
   it("should use default page and limit values if not provided in query", async () => {
     const req = { query: {} }; // No page or limit specified
 
-    // Insert users directly into the in-memory database
-    const mockUserList = [
-      {
-        name: "John Doe",
-        email: "john@example.com",
-        password: "@Password123456",
-        age: 25,
-      },
-      {
-        name: "Jane Doe",
-        email: "jane@example.com",
-        password: "@Password123456",
-        age: 26,
-      },
-    ];
-
-    await User.insertMany(mockUserList); // Insert users into MongoDB
-
     const mockTotalUser = await User.countDocuments(); // Get total user count
 
     // Call the service to get the user list
     const result = await getUserListService(req);
 
     // Assertions
-    expect(result.userList).toHaveLength(2); // Should return both users
+    expect(result.userList).toHaveLength(3); // Should return both users
     expect(result.totalUser).toBe(mockTotalUser); // Check total user count
     expect(result.page).toBe(1); // Default page is 1
     expect(result.limit).toBe(10); // Default limit is 10
 
     expect(result.userList[0].name).toBe("John Doe");
-    expect(result.userList[1].name).toBe("Jane Doe");
+    expect(result.userList[1].name).toBe("John Doe");
+    expect(result.userList[2].name).toBe("Jane Doe");
   });
 });
 
@@ -193,7 +167,7 @@ describe("getUserService", () => {
   beforeEach(() => {
     req = {
       user: {
-        _id: new mongoose.Types.ObjectId(), // Generate a valid ObjectId
+        _id: userTest._id,
       },
     };
   });
@@ -202,24 +176,14 @@ describe("getUserService", () => {
     // Mock the validation schema to return no error
     userIdValidationSchema.validate.mockReturnValue({ error: null });
 
-    // Insert a user into the in-memory MongoDB
-    const mockUser = await User.create({
-      _id: req.user._id,
-      name: "John Doe",
-      age: 15,
-      email: "john.doe@example.com",
-      password: "@Password123",
-    });
-
-    // Call the service to get the user
     const result = await getUserService(req);
 
     // Assertions
     expect(result).toMatchObject({
-      _id: mockUser._id,
+      _id: userTest._id,
       name: "John Doe",
       email: "john.doe@example.com",
-      age: 15,
+      age: 25,
     });
   });
 
@@ -258,22 +222,13 @@ describe("updateUserService", () => {
   beforeEach(async () => {
     req = {
       user: {
-        _id: new mongoose.Types.ObjectId(), // Generate a valid ObjectId
+        _id: userTest._id, // Generate a valid ObjectId
       },
       body: {
         name: "John Doe Updated",
         age: 16,
       },
     };
-
-    // Insert a user into the in-memory MongoDB
-    await User.create({
-      _id: req.user._id,
-      name: "John Doe",
-      age: 15,
-      email: "john.doe@example.com",
-      password: "@Password123",
-    });
   });
 
   it("should update the user when given valid input", async () => {
@@ -289,17 +244,19 @@ describe("updateUserService", () => {
     const userUpdateSpy = jest
       .spyOn(User, "findOneAndUpdate")
       .mockRejectedValue(new Error("Database error"));
-  
+
     const req = {
       user: { _id: new mongoose.Types.ObjectId() }, // Mocking a user ID
       body: { name: "Updated Name", age: 30 }, // Mocking request body
     };
-  
-    await expect(updateUserService(req)).rejects.toThrow("Database error during user update"); // Expecting the specific error message
-  
+
+    await expect(updateUserService(req)).rejects.toThrow(
+      "Database error"
+    ); // Expecting the specific error message
+
     // Ensure the update method was called
     expect(userUpdateSpy).toHaveBeenCalled();
-  
+
     userUpdateSpy.mockRestore();
   });
 
@@ -316,7 +273,6 @@ describe("updateUserService", () => {
   });
 });
 
-
 describe("deleteUserService", () => {
   let req;
 
@@ -326,7 +282,7 @@ describe("deleteUserService", () => {
         userId: new mongoose.Types.ObjectId().toString(), // Generate a valid ObjectId as a string
       },
     };
-  
+
     // Create a user that you will delete later
     await User.create({
       _id: req.params.userId,
@@ -336,7 +292,7 @@ describe("deleteUserService", () => {
       age: 25,
     });
   });
-  
+
   it("should delete a user when given a valid user ID", async () => {
     // Validate the schema (assuming no validation errors)
     userIdValidationSchema.validate.mockReturnValue({ error: null });

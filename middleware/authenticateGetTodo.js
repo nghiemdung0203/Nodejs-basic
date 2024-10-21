@@ -11,10 +11,11 @@ const authenticateGetTodo = async (req, res, next) => {
   }
 
   const token = authHeader.replace("Bearer ", "");
-
+  
   try {
     const data = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findOne({ _id: data._id, "tokens.token": token });
+    console.log(data);
+    const user = await User.findOne({ _id: data._id });
     if (!user) {
       throw new Error("User not found.");
     }
@@ -32,14 +33,9 @@ const authenticateGetTodo = async (req, res, next) => {
       next();
     }
   } catch (error) {
-    if (error.name === "JsonWebTokenError") {
-      return res
-        .status(401)
-        .send({ error: "Not authorized to access this resource." });
-    }
     return res
       .status(401)
-      .send({ error: "Not authorized to access this resource." });
+      .send({ error: error.message });
   }
 };
 

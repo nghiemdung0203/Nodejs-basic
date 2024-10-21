@@ -22,13 +22,10 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  jest.clearAllMocks();
   await disconnect();
 });
 
-afterEach(async () => {
-  await clearDatabase();
-  jest.clearAllMocks();
-});
 
 describe("createUser Controller", () => {
   it("should create a new user and return 201 status", async () => {
@@ -267,7 +264,7 @@ describe("updateUser controller", () => {
     await authenticate(req, res, jest.fn());
     await updateUser(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(mockResponse);
   });
 

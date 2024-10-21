@@ -20,7 +20,6 @@ const updateUserService = async (req) => {
   // Validate request body
   const { error: bodyError } = updateUserValidationSchema.validate(req.body);
   if (bodyError) {
-    console.log("Body Validation Error:", bodyError.details[0].message);
     throw new Error(bodyError.details[0].message); // Log the validation error
   }
 
@@ -47,7 +46,7 @@ const updateUserService = async (req) => {
   } catch (error) {
     console.error("Update Error:", error.message); // Log the error message
     // Throw a more specific error message to help with testing
-    throw new Error("Database error during user update"); // Customize this message as needed
+    throw new Error(error.message); // Customize this message as needed
   }
 };
 
