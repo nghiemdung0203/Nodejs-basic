@@ -1,9 +1,9 @@
-const { todoService } = require("../../service/Todo/todoService");
-const redisClient = require("../../redis")
+const redisClient = require("../../redis");
+const { getTodoService } = require("../../service/todoService");
 
 const getTodo = async (req, res) => {
   try {
-    const { todos, totalTodos, page, limit } = await todoService.getTodoService(req);
+    const { todos, totalTodos, page, limit } = await getTodoService(req);
 
     const responseData = {
       todos,
@@ -12,7 +12,7 @@ const getTodo = async (req, res) => {
       totalPages: Math.ceil(totalTodos / limit),
     };
 
-    await redisClient.setEx('todos', 3600, JSON.stringify(responseData));
+    await redisClient.setEx("todos", 3600, JSON.stringify(responseData));
 
     res.status(200).json({
       isCached: false,

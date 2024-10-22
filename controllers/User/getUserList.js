@@ -1,9 +1,10 @@
-const { userService } = require("../../service/User/userService");
+const { getUserListService } = require("../../service/userService");
+
 
 const getUserList = async (req, res) => {
  
   try {
-    const { userList, totalUser, page, limit } = await userService.getUserListService(req);
+    const { userList, totalUser, page, limit } = await getUserListService(req);
     res
       .status(200)
       .json({

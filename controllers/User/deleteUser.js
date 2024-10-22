@@ -1,8 +1,9 @@
-const { userService } = require("../../service/User/userService");
+const { deleteUserService } = require("../../service/userService");
+
 
 const deleteUser = async (req, res) => {
   try {
-    const result = await userService.deleteUserService(req);
+    const result = await deleteUserService(req);
     res.status(200).json(result);
   } catch (error) {
     if (error.message === "User not found") {

@@ -1,8 +1,9 @@
-const { userService } = require("../../service/User/userService");
+const { updateUserService } = require("../../service/userService");
+
 
 const updateUser = async (req, res) => {
   try {
-    const updatedUser = await userService.updateUserService(req);
+    const updatedUser = await updateUserService(req);
     return res.status(201).json(updatedUser);
   } catch (error) {
     if (error.message.includes("User not found")) {

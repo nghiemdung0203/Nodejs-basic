@@ -1,8 +1,8 @@
-const { todoService } = require("../../service/Todo/todoService");
+const { updateTodoService } = require("../../service/todoService");
 
 const updateTodo = async (req, res) => {
   try {
-    const updatedTodo = await todoService.updateTodoService(req);
+    const updatedTodo = await updateTodoService(req);
     res.status(200).json(updatedTodo);
   } catch (error) {
     if (error.message === "Todo not found") {
