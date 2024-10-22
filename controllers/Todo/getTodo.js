@@ -1,5 +1,5 @@
 const { todoService } = require("../../service/Todo/todoService");
-const redisClient = require('../../redis');
+const redisClient = require("../../redis")
 
 const getTodo = async (req, res) => {
   try {
@@ -12,8 +12,7 @@ const getTodo = async (req, res) => {
       totalPages: Math.ceil(totalTodos / limit),
     };
 
-    // Cache the data in Redis with a unique key for the user
-    await redisClient.setEx('todos', 3600, JSON.stringify(responseData)); // Set with an expiration of 1 hour
+    await redisClient.setEx('todos', 3600, JSON.stringify(responseData));
 
     res.status(200).json({
       isCached: false,
